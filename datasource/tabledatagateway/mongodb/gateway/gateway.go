@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/goagile/goeaa/datasource/tabledatagateway/mongodb/dto"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -52,19 +53,36 @@ type gw struct {
 	books  *mongo.Collection
 }
 
-func (g *gw) FindBook(ctx context.Context, filter bson.M) (interface{}, error) {
-	r := g.books.FindOne(ctx, filter)
+func (g *gw) UpdateBookPrice(
+	ctx context.Context,
+	id interface{},
+	base, discounted, discount int,
+) error {
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{
+		"price": bson.M{
+			"base":       base,
+			"discounted": discounted,
+		},
+		"discount": discount,
+	}}
+	_, err := g.books.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (g *gw) FindBookByISBN(ctx context.Context, isbn string) (*dto.Book, error) {
+	r := g.books.FindOne(ctx, bson.M{"isbn": isbn})
 	if err := r.Err(); err != nil {
-		return nil, err
+		return new(dto.Book), err
 	}
-	var b bson.M
+	var b *dto.Book
 	if err := r.Decode(&b); err != nil {
-		return nil, err
+		return new(dto.Book), err
 	}
 	return b, nil
 }
 
-func (g *gw) InsertBook(ctx context.Context, b bson.M) (interface{}, error) {
+func (g *gw) InsertBook(ctx context.Context, b *dto.Book) (interface{}, error) {
 	r, err := g.books.InsertOne(ctx, b)
 	if err != nil {
 		return 0, err

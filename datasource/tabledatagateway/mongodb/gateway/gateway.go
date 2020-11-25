@@ -39,18 +39,32 @@ func NewMongoDB(ctx context.Context, uri string) *gw {
 func NewMongoDBFromClient(client *mongo.Client) *gw {
 	db := client.Database("testdatabase")
 	books := db.Collection("books")
+	authors := db.Collection("authors")
 	g := &gw{
-		client: client,
-		db:     db,
-		books:  books,
+		client:  client,
+		db:      db,
+		books:   books,
+		authors: authors,
 	}
 	return g
 }
 
 type gw struct {
-	client *mongo.Client
-	db     *mongo.Database
-	books  *mongo.Collection
+	client  *mongo.Client
+	db      *mongo.Database
+	books   *mongo.Collection
+	authors *mongo.Collection
+}
+
+//
+// Book methods
+//
+func (g *gw) DeleteAllBooks(ctx context.Context) (int64, error) {
+	r, err := g.books.DeleteMany(ctx, bson.M{})
+	if err != nil {
+		return 0, err
+	}
+	return r.DeletedCount, nil
 }
 
 func (g *gw) UpdateBookPrice(
@@ -67,6 +81,19 @@ func (g *gw) UpdateBookPrice(
 		"discount": discount,
 	}}
 	_, err := g.books.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (g *gw) UpdateAuthorBio(
+	ctx context.Context,
+	id interface{},
+	bio string,
+) error {
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{
+		"bio": bio,
+	}}
+	_, err := g.authors.UpdateOne(ctx, filter, update)
 	return err
 }
 
@@ -98,12 +125,35 @@ func (g *gw) CountBooks(ctx context.Context) (int64, error) {
 	return c, nil
 }
 
-func (g *gw) DeleteAllBooks(ctx context.Context) (int64, error) {
-	r, err := g.books.DeleteMany(ctx, bson.M{})
+//
+// Autrhor methods
+//
+func (g *gw) DeleteAllAutrhors(ctx context.Context) (int64, error) {
+	r, err := g.authors.DeleteMany(ctx, bson.M{})
 	if err != nil {
 		return 0, err
 	}
 	return r.DeletedCount, nil
+}
+
+func (g *gw) InsertAuthor(ctx context.Context, a *dto.Author) (interface{}, error) {
+	r, err := g.authors.InsertOne(ctx, a)
+	if err != nil {
+		return 0, err
+	}
+	return r.InsertedID, nil
+}
+
+func (g *gw) FindAuthorByID(ctx context.Context, id interface{}) (*dto.Author, error) {
+	r := g.authors.FindOne(ctx, bson.M{"_id": id})
+	if err := r.Err(); err != nil {
+		return new(dto.Author), err
+	}
+	var a *dto.Author
+	if err := r.Decode(&a); err != nil {
+		return new(dto.Author), nil
+	}
+	return a, nil
 }
 
 func (g *gw) Disconnect(ctx context.Context) {

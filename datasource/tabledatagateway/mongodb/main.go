@@ -16,12 +16,18 @@ const (
 
 var book = &dto.Book{
 	Title:     "Портрет Дориана Грея",
-	Authors:   []*dto.Author{{Name: "Уайльд Оскар"}},
+	Authors:   []*dto.BookAuthor{{Name: "Уайльд Оскар"}},
 	Price:     &dto.Price{Base: 200, Discounted: 160},
 	Discount:  20,
 	PubOffice: &dto.PubOffice{Name: "AСТ", Year: 2015},
 	ISBN:      "978-5-17-099056-6",
 	PageCount: 320,
+}
+
+var author = &dto.Author{
+	First: "Оскар",
+	Last:  "Уайльд",
+	Bio:   "Оскар Уайльд родился в 1854 году в Дублине.",
 }
 
 func main() {
@@ -42,30 +48,30 @@ func main() {
 	//
 	// Insert One Book
 	//
-	id, err := g.InsertBook(ctx, book)
+	bookID, err := g.InsertBook(ctx, book)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("id", id)
+	fmt.Println("bookID", bookID)
 
 	//
 	// FindBook
 	//
-	found, err := g.FindBookByISBN(ctx, "978-5-17-099056-6")
+	foundBook, err := g.FindBookByISBN(ctx, "978-5-17-099056-6")
 	if err != nil {
 		log.Fatal("FindBook", err)
 	}
-	b, _ := json.MarshalIndent(found, "  ", "  ")
-	fmt.Println("found", string(b))
+	foundBookJSON, _ := json.MarshalIndent(foundBook, "  ", "  ")
+	fmt.Println("foundBookJSON", string(foundBookJSON))
 
 	//
 	// Count All Books
 	//
-	c, err := g.CountBooks(ctx)
+	countBooks, err := g.CountBooks(ctx)
 	if err != nil {
 		log.Fatal("CountBooks", err)
 	}
-	fmt.Println("CountBooks", c)
+	fmt.Println("countBooks", countBooks)
 
 	//
 	// Update
@@ -73,17 +79,61 @@ func main() {
 	base := 250
 	discounted := 225
 	discount := 10
-	if err := g.UpdateBookPrice(ctx, id, base, discounted, discount); err != nil {
+	if err := g.UpdateBookPrice(ctx, bookID, base, discounted, discount); err != nil {
 		log.Fatal("UpdateBookPrice", err)
 	}
 
 	//
 	// FindBook
 	//
-	updated, err := g.FindBookByISBN(ctx, "978-5-17-099056-6")
+	updatedBook, err := g.FindBookByISBN(ctx, "978-5-17-099056-6")
 	if err != nil {
-		log.Fatal("FindBook", err)
+		log.Fatal("FindBookByISBN", err)
 	}
-	u, _ := json.MarshalIndent(updated, "  ", "  ")
-	fmt.Println("found", string(u))
+	updatedBookJSON, _ := json.MarshalIndent(updatedBook, "  ", "  ")
+	fmt.Println("updatedBookJSON", string(updatedBookJSON))
+
+	//
+	// Delete All Authors
+	//
+	if _, err := g.DeleteAllAutrhors(ctx); err != nil {
+		log.Fatal("DeleteAllAutrhors", err)
+	}
+
+	//
+	// Insert New Author
+	//
+	authorID, err := g.InsertAuthor(ctx, author)
+	if err != nil {
+		log.Fatal("InsertAuthor", err)
+	}
+	fmt.Println("authorID", authorID)
+
+	//
+	// Find Author
+	//
+	foundAuthor, err := g.FindAuthorByID(ctx, authorID)
+	if err != nil {
+		log.Fatal("FindAuthorByID", err)
+	}
+	foundAuthorJSON, _ := json.MarshalIndent(foundAuthor, "  ", "  ")
+	fmt.Println("foundAuthorJSON", string(foundAuthorJSON))
+
+	//
+	// Update
+	//
+	newBio := "..."
+	if err := g.UpdateAuthorBio(ctx, authorID, newBio); err != nil {
+		log.Fatal("UpdateAuthorBio", err)
+	}
+
+	//
+	// Find Author
+	//
+	udatedAuthor, err := g.FindAuthorByID(ctx, authorID)
+	if err != nil {
+		log.Fatal("FindAuthorByID", err)
+	}
+	udatedAuthorJSON, _ := json.MarshalIndent(udatedAuthor, "  ", "  ")
+	fmt.Println("udatedAuthorJSON", string(udatedAuthorJSON))
 }

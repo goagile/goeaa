@@ -126,9 +126,9 @@ func (g *gw) CountBooks(ctx context.Context) (int64, error) {
 }
 
 //
-// Autrhor methods
+// Authors methods
 //
-func (g *gw) DeleteAllAutrhors(ctx context.Context) (int64, error) {
+func (g *gw) DeleteAllAuthors(ctx context.Context) (int64, error) {
 	r, err := g.authors.DeleteMany(ctx, bson.M{})
 	if err != nil {
 		return 0, err

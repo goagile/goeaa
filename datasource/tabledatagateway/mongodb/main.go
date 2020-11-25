@@ -96,8 +96,8 @@ func main() {
 	//
 	// Delete All Authors
 	//
-	if _, err := g.DeleteAllAutrhors(ctx); err != nil {
-		log.Fatal("DeleteAllAutrhors", err)
+	if _, err := g.DeleteAllAuthors(ctx); err != nil {
+		log.Fatal("DeleteAllAuthors", err)
 	}
 
 	//
